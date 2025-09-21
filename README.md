@@ -1,6 +1,6 @@
 # Neovim Configuration
 
-A comprehensive Neovim configuration with enhanced language support for game development, web development, and general programming.
+A Neovim configuration with language support for game development.
 
 ## Features
 
