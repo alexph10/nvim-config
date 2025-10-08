@@ -880,9 +880,13 @@ require("lazy").setup({
         { "<leader>b", group = "Buffer" },
         { "<leader>d", group = "Debug" },
         { "<leader>g", group = "Git" },
+        { "<leader>h", group = "Harpoon" },
         { "<leader>l", group = "LSP" },
+        { "<leader>n", group = "New/Create" },
+        { "<leader>p", group = "Project" },
         { "<leader>t", group = "Terminal" },
         { "<leader>w", group = "Window" },
+        { "<leader>c", group = "Colorscheme" },
       })
     end,
   },
@@ -1154,8 +1158,50 @@ require("lazy").setup({
             end
           },
         },
-        extensions = {}
+        extensions = {
+          file_browser = {
+            theme = "ivy",
+            hijack_netrw = true,
+            mappings = {
+              ["i"] = {
+                ["<A-c>"] = require("telescope._extensions.file_browser.actions").create,
+                ["<S-CR>"] = require("telescope._extensions.file_browser.actions").create_from_prompt,
+                ["<A-r>"] = require("telescope._extensions.file_browser.actions").rename,
+                ["<A-m>"] = require("telescope._extensions.file_browser.actions").move,
+                ["<A-y>"] = require("telescope._extensions.file_browser.actions").copy,
+                ["<A-d>"] = require("telescope._extensions.file_browser.actions").remove,
+                ["<C-o>"] = require("telescope._extensions.file_browser.actions").open,
+                ["<C-g>"] = require("telescope._extensions.file_browser.actions").goto_parent_dir,
+                ["<C-e>"] = require("telescope._extensions.file_browser.actions").goto_home_dir,
+                ["<C-w>"] = require("telescope._extensions.file_browser.actions").goto_cwd,
+                ["<C-t>"] = require("telescope._extensions.file_browser.actions").change_cwd,
+                ["<C-f>"] = require("telescope._extensions.file_browser.actions").toggle_browser,
+                ["<C-h>"] = require("telescope._extensions.file_browser.actions").toggle_hidden,
+                ["<C-s>"] = require("telescope._extensions.file_browser.actions").toggle_all,
+              },
+              ["n"] = {
+                ["c"] = require("telescope._extensions.file_browser.actions").create,
+                ["r"] = require("telescope._extensions.file_browser.actions").rename,
+                ["m"] = require("telescope._extensions.file_browser.actions").move,
+                ["y"] = require("telescope._extensions.file_browser.actions").copy,
+                ["d"] = require("telescope._extensions.file_browser.actions").remove,
+                ["o"] = require("telescope._extensions.file_browser.actions").open,
+                ["g"] = require("telescope._extensions.file_browser.actions").goto_parent_dir,
+                ["e"] = require("telescope._extensions.file_browser.actions").goto_home_dir,
+                ["w"] = require("telescope._extensions.file_browser.actions").goto_cwd,
+                ["t"] = require("telescope._extensions.file_browser.actions").change_cwd,
+                ["f"] = require("telescope._extensions.file_browser.actions").toggle_browser,
+                ["h"] = require("telescope._extensions.file_browser.actions").toggle_hidden,
+                ["s"] = require("telescope._extensions.file_browser.actions").toggle_all,
+              },
+            },
+          },
+        }
       })
+      
+      -- Load extensions
+      require("telescope").load_extension("file_browser")
+      require('telescope').load_extension('projects')
     end,
   },
 
@@ -1283,6 +1329,131 @@ require("lazy").setup({
           },
         },
       })
+    end,
+  },
+
+  -- AdvancedNewFile for quick file and folder creation
+  {
+    "Mohammed-Taher/AdvancedNewFile.nvim",
+    config = function()
+      -- Plugin loads automatically, no additional setup required
+    end,
+  },
+
+  -- Oil.nvim - File manager as a buffer
+  {
+    "stevearc/oil.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      require("oil").setup({
+        default_file_explorer = true,
+        columns = {
+          "icon",
+          "permissions",
+          "size",
+          "mtime",
+        },
+        buf_options = {
+          buflisted = false,
+          bufhidden = "hide",
+        },
+        win_options = {
+          wrap = false,
+          signcolumn = "no",
+          cursorcolumn = false,
+          foldcolumn = "0",
+          spell = false,
+          list = false,
+          conceallevel = 3,
+          concealcursor = "nvic",
+        },
+        delete_to_trash = true,
+        skip_confirm_for_simple_edits = false,
+        prompt_save_on_select_new_entry = true,
+        cleanup_delay_ms = 2000,
+        keymaps = {
+          ["g?"] = "actions.show_help",
+          ["<CR>"] = "actions.select",
+          ["<C-s>"] = "actions.select_vsplit",
+          ["<C-h>"] = "actions.select_split",
+          ["<C-t>"] = "actions.select_tab",
+          ["<C-p>"] = "actions.preview",
+          ["<C-c>"] = "actions.close",
+          ["<C-l>"] = "actions.refresh",
+          ["-"] = "actions.parent",
+          ["_"] = "actions.open_cwd",
+          ["`"] = "actions.cd",
+          ["~"] = "actions.tcd",
+          ["gs"] = "actions.change_sort",
+          ["gx"] = "actions.open_external",
+          ["g."] = "actions.toggle_hidden",
+          ["g\\"] = "actions.toggle_trash",
+        },
+      })
+    end,
+  },
+
+  -- Telescope File Browser extension
+  {
+    "nvim-telescope/telescope-file-browser.nvim",
+    dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
+  },
+
+  -- Project.nvim - Automatic project detection
+  {
+    "ahmedkhalf/project.nvim",
+    config = function()
+      require("project_nvim").setup({
+        detection_methods = { "lsp", "pattern" },
+        patterns = { ".git", "_darcs", ".hg", ".bzr", ".svn", "Makefile", "package.json", "Cargo.toml", "go.mod", "requirements.txt", "pyproject.toml" },
+        ignore_lsp = {},
+        exclude_dirs = {},
+        show_hidden = false,
+        silent_chdir = true,
+        scope_chdir = 'global',
+        datapath = vim.fn.stdpath("data"),
+      })
+    end,
+  },
+
+  -- Harpoon - Quick file navigation
+  {
+    "ThePrimeagen/harpoon",
+    branch = "harpoon2",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      local harpoon = require("harpoon")
+      harpoon:setup({
+        settings = {
+          save_on_toggle = false,
+          sync_on_ui_close = false,
+          key = function()
+            return vim.loop.cwd()
+          end,
+        }
+      })
+    end,
+  },
+
+  -- Templates.nvim - File templates
+  {
+    "glepnir/template.nvim",
+    cmd = {'Template','TemProject'},
+    config = function()
+      require('template').setup({
+        temp_dir = vim.fn.stdpath("config") .. "/templates",
+        author = "Your Name",
+        email = "your.email@example.com",
+      })
+    end,
+  },
+
+  -- Mkdir.nvim - Auto-create directories when saving files
+  {
+    "jghauser/mkdir.nvim",
+    config = function()
+      -- Automatically creates missing directories when saving files
+      -- No additional configuration needed
     end,
   },
 
@@ -1431,12 +1602,39 @@ vim.keymap.set("x", "<A-j>", ":move '>+1<CR>gv-gv", { desc = "Move text down" })
 vim.keymap.set("x", "<A-k>", ":move '<-2<CR>gv-gv", { desc = "Move text up" })
 
 -- Clear search highlighting
-vim.keymap.set("n", "<leader>h", ":nohlsearch<CR>", { desc = "Clear search highlighting" })
+vim.keymap.set("n", "<leader>nh", ":nohlsearch<CR>", { desc = "Clear search highlighting" })
 
 -- Quick save and quit
 vim.keymap.set("n", "<leader>w", ":w<CR>", { desc = "Save file" })
 vim.keymap.set("n", "<leader>q", ":q<CR>", { desc = "Quit" })
 vim.keymap.set("n", "<leader>x", ":x<CR>", { desc = "Save and quit" })
+
+-- AdvancedNewFile keymap
+vim.keymap.set("n", "<leader>nf", ":AdvancedNewFile<CR>", { desc = "Create new file/folder" })
+
+-- Oil.nvim - File manager as buffer
+vim.keymap.set("n", "-", ":Oil<CR>", { desc = "Open parent directory in Oil" })
+vim.keymap.set("n", "<leader>-", ":Oil .<CR>", { desc = "Open current directory in Oil" })
+
+-- Telescope File Browser and Projects
+vim.keymap.set("n", "<leader>fb", ":Telescope file_browser<CR>", { desc = "File browser" })
+vim.keymap.set("n", "<leader>fB", ":Telescope file_browser path=%:p:h select_buffer=true<CR>", { desc = "File browser (current file)" })
+vim.keymap.set("n", "<leader>pp", ":Telescope projects<CR>", { desc = "Switch projects" })
+vim.keymap.set("n", "<leader>pf", ":Telescope find_files<CR>", { desc = "Find project files" })
+
+-- Harpoon - Quick file navigation
+vim.keymap.set("n", "<leader>ha", function() require("harpoon"):list():append() end, { desc = "Harpoon add file" })
+vim.keymap.set("n", "<leader>hh", function() require("harpoon").ui:toggle_quick_menu(require("harpoon"):list()) end, { desc = "Harpoon quick menu" })
+vim.keymap.set("n", "<leader>h1", function() require("harpoon"):list():select(1) end, { desc = "Harpoon file 1" })
+vim.keymap.set("n", "<leader>h2", function() require("harpoon"):list():select(2) end, { desc = "Harpoon file 2" })
+vim.keymap.set("n", "<leader>h3", function() require("harpoon"):list():select(3) end, { desc = "Harpoon file 3" })
+vim.keymap.set("n", "<leader>h4", function() require("harpoon"):list():select(4) end, { desc = "Harpoon file 4" })
+vim.keymap.set("n", "<C-S-P>", function() require("harpoon"):list():prev() end, { desc = "Harpoon previous" })
+vim.keymap.set("n", "<C-S-N>", function() require("harpoon"):list():next() end, { desc = "Harpoon next" })
+
+-- Templates
+vim.keymap.set("n", "<leader>ft", ":Template<CR>", { desc = "Insert template" })
+vim.keymap.set("n", "<leader>fT", ":TemProject<CR>", { desc = "Project template" })
 
 -- Colorscheme keymaps
 vim.keymap.set("n", "<leader>cr", ":colorscheme rose-pine<CR>", { desc = "Rose Pine Dawn colorscheme" })
