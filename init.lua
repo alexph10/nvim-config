@@ -48,6 +48,26 @@ vim.opt.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 vim.opt.inccommand = "split"
 
+-- Font settings for GUI Neovim (Neovide, nvim-qt, etc.)
+if vim.g.neovide then
+  -- Neovide-specific font settings
+  vim.o.guifont = "JetBrainsMono Nerd Font:h14"
+  vim.g.neovide_scale_factor = 1.0
+  vim.g.neovide_padding_top = 0
+  vim.g.neovide_padding_bottom = 0
+  vim.g.neovide_padding_right = 0
+  vim.g.neovide_padding_left = 0
+elseif vim.g.fvim_loaded then
+  -- FVim-specific font settings
+  vim.o.guifont = "JetBrainsMono Nerd Font:h14"
+elseif vim.g.nvui then
+  -- Nvui-specific font settings
+  vim.o.guifont = "JetBrainsMono Nerd Font:h14"
+else
+  -- General GUI font setting (works with nvim-qt and others)
+  vim.o.guifont = "JetBrainsMono Nerd Font:h14"
+end
+
 -- Setup plugins
 require("lazy").setup({
   -- Plenary (required by many plugins)
