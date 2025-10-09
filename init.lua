@@ -440,6 +440,26 @@ require("lazy").setup({
     end,
   },
 
+  -- Window picker for better window management
+  {
+    "s1n7ax/nvim-window-picker",
+    name = "window-picker",
+    event = "VeryLazy",
+    version = "2.*",
+    config = function()
+      require("window-picker").setup({
+        filter_rules = {
+          include_current_win = false,
+          autoselect_one = true,
+          bo = {
+            filetype = { "neo-tree", "neo-tree-popup", "notify" },
+            buftype = { "terminal", "quickfix" },
+          },
+        },
+      })
+    end,
+  },
+
   -- Neo-tree file explorer
   {
     "nvim-neo-tree/neo-tree.nvim",
@@ -448,6 +468,7 @@ require("lazy").setup({
       "nvim-lua/plenary.nvim",
       "nvim-tree/nvim-web-devicons",
       "MunifTanjim/nui.nvim",
+      "s1n7ax/nvim-window-picker",
     },
     config = function()
       require("neo-tree").setup({
@@ -455,6 +476,8 @@ require("lazy").setup({
         popup_border_style = "rounded",
         enable_git_status = true,
         enable_diagnostics = true,
+        open_files_do_not_replace_types = { "terminal", "trouble", "qf" },
+        sort_case_insensitive = false,
         default_component_configs = {
           container = {
             enable_character_fade = true
@@ -513,8 +536,8 @@ require("lazy").setup({
               "toggle_node",
               nowait = false,
             },
-            ["<2-LeftMouse>"] = "open",
-            ["<cr>"] = "open",
+            ["<2-LeftMouse>"] = "open_with_window_picker",
+            ["<cr>"] = "open_with_window_picker",
             ["<esc>"] = "revert_preview",
             ["P"] = { "toggle_preview", config = { use_float = true } },
             ["l"] = "focus_preview",
@@ -522,6 +545,7 @@ require("lazy").setup({
             ["s"] = "open_vsplit",
             ["t"] = "open_tabnew",
             ["w"] = "open_with_window_picker",
+            ["o"] = "open_with_window_picker",
             ["C"] = "close_node",
             ["z"] = "close_all_nodes",
             ["a"] = {
@@ -1557,6 +1581,12 @@ require("lazy").setup({
 -- File Explorer
 vim.keymap.set("n", "<leader>e", ":Neotree toggle<CR>", { desc = "Toggle Neo-tree" })
 vim.keymap.set("n", "<leader>o", ":Neotree focus<CR>", { desc = "Focus Neo-tree" })
+
+-- Window navigation
+vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Go to left window" })
+vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Go to lower window" })
+vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Go to upper window" })
+vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Go to right window" })
 
 -- Terminal
 vim.keymap.set("n", "<C-\\>", ":ToggleTerm<CR>", { desc = "Toggle Terminal" })
