@@ -76,10 +76,10 @@ require("lazy").setup({
     lazy = false,
   },
 
-  -- Gruvbox colorscheme
+  -- Gruvbox colorscheme (disabled - melange is now default)
   {
     "ellisonleao/gruvbox.nvim",
-    priority = 1000,
+    priority = 999, -- Lower priority than melange
     config = function()
       require("gruvbox").setup({
         terminal_colors = true, -- add neovim terminal colors
@@ -104,9 +104,9 @@ require("lazy").setup({
         dim_inactive = false,
         transparent_mode = false,
       })
-      -- VERY IMPORTANT: Set background BEFORE calling colorscheme command
-      vim.o.background = "light" -- or "dark" for dark mode
-      vim.cmd([[colorscheme gruvbox]])
+      -- Commented out to allow melange as default
+      -- vim.o.background = "light" -- or "dark" for dark mode
+      -- vim.cmd([[colorscheme gruvbox]])
     end,
   },
 
@@ -373,6 +373,18 @@ require("lazy").setup({
     config = function()
       -- bg.nvim will automatically look for images in ~/.config/nvim/bg/
       -- You can place your background images there
+    end,
+  },
+
+  -- Melange colorscheme
+  {
+    "savq/melange-nvim",
+    priority = 1001, -- Higher priority than other themes
+    config = function()
+      -- Set background to dark for melange
+      vim.o.background = "dark"
+      -- Apply melange colorscheme
+      vim.cmd([[colorscheme melange]])
     end,
   },
 
@@ -1647,8 +1659,9 @@ vim.keymap.set("n", "<leader>cgd", function()
   vim.cmd("colorscheme gruvbox")
 end, { desc = "Gruvbox Dark colorscheme" })
 vim.keymap.set("n", "<leader>cm", ":colorscheme monokai-pro<CR>", { desc = "Monokai Pro colorscheme" })
+vim.keymap.set("n", "<leader>cme", ":colorscheme melange<CR>", { desc = "Melange colorscheme" })
 vim.keymap.set("n", "<leader>ct", ":Telescope colorscheme<CR>", { desc = "Choose colorscheme" })
 
--- Set default colorscheme to Gruvbox light (already set in plugin config above)
--- vim.o.background = "light"
--- vim.cmd("colorscheme gruvbox")
+-- Set default colorscheme to Melange dark (already set in plugin config above)
+-- vim.o.background = "dark"
+-- vim.cmd("colorscheme melange")
