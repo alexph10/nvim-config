@@ -48,6 +48,79 @@ vim.opt.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
 vim.opt.inccommand = "split"
 
+-- Enable automatic file reading when files change on disk
+vim.opt.autoread = true
+
+-- Set up autocmds for file system events
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+  pattern = "*",
+  command = "if mode() != 'c' | checktime | endif",
+})
+
+-- Automatically refresh file tree when files change
+vim.api.nvim_create_autocmd({ "BufWritePost", "BufNewFile", "BufDelete" }, {
+  pattern = "*",
+  callback = function()
+    -- Refresh Neo-tree if it's open
+    local neo_tree = require("neo-tree.command")
+    if neo_tree then
+      vim.schedule(function()
+        neo_tree.execute({ action = "refresh" })
+      end)
+    end
+  end,
+})
+
+-- Watch for external file changes and refresh
+vim.api.nvim_create_autocmd({ "FileChangedShellPost" }, {
+  pattern = "*",
+  callback = function()
+    vim.notify("File changed on disk. Buffer reloaded.", vim.log.levels.INFO)
+    -- Refresh Neo-tree
+    local neo_tree = require("neo-tree.command")
+    if neo_tree then
+      vim.schedule(function()
+        neo_tree.execute({ action = "refresh" })
+      end)
+    end
+  end,
+})
+
+-- Enhanced file system monitoring for real-time updates
+vim.api.nvim_create_autocmd({ "VimEnter", "DirChanged", "BufEnter" }, {
+  pattern = "*",
+  callback = function()
+    -- Trigger project root detection
+    vim.schedule(function()
+      local project_nvim = require("project_nvim.project")
+      if project_nvim then
+        project_nvim.set_pwd()
+      end
+    end)
+  end,
+})
+
+-- Monitor for new files created externally (like with touch command)
+vim.api.nvim_create_autocmd({ "FocusGained" }, {
+  pattern = "*",
+  callback = function()
+    -- Force refresh of file tree and project detection
+    vim.schedule(function()
+      -- Refresh Neo-tree
+      local neo_tree = require("neo-tree.command")
+      if neo_tree then
+        neo_tree.execute({ action = "refresh" })
+      end
+      
+      -- Update project root if needed
+      local project_nvim = require("project_nvim.project")
+      if project_nvim then
+        project_nvim.set_pwd()
+      end
+    end)
+  end,
+})
+
 -- Font settings for GUI Neovim (Neovide, nvim-qt, etc.)
 if vim.g.neovide then
   -- Neovide-specific font settings
@@ -595,12 +668,12 @@ require("lazy").setup({
             },
           },
           follow_current_file = {
-            enabled = false,
+            enabled = true,
             leave_dirs_open = false,
           },
           group_empty_dirs = false,
           hijack_netrw_behavior = "open_default",
-          use_libuv_file_watcher = false,
+          use_libuv_file_watcher = true,
           window = {
             mappings = {
               ["<bs>"] = "navigate_up",
@@ -1448,6 +1521,13 @@ require("lazy").setup({
         silent_chdir = true,
         scope_chdir = 'global',
         datapath = vim.fn.stdpath("data"),
+        -- Enable automatic project root detection on file changes
+        manual_mode = false,
+        -- Update project root when new files are created
+        update_focused_file = {
+          enable = true,
+          update_cwd = true,
+        },
       })
     end,
   },
