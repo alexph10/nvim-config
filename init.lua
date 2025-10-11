@@ -175,7 +175,7 @@ require("lazy").setup({
         palette_overrides = {},
         overrides = {},
         dim_inactive = false,
-        transparent_mode = false,
+        transparent_mode = true,
       })
       -- Commented out to allow melange as default
       -- vim.o.background = "light" -- or "dark" for dark mode
@@ -194,7 +194,7 @@ require("lazy").setup({
         dark_variant = "main",
         bold_vert_split = false,
         dim_nc_background = false,
-        disable_background = false,
+        disable_background = true,
         disable_float_background = false,
         disable_italics = false,
         groups = {
@@ -467,7 +467,7 @@ require("lazy").setup({
     priority = 998,
     config = function()
       require("monokai-pro").setup({
-        transparent_background = false,
+        transparent_background = true,
         terminal_colors = true,
         devicons = true, -- highlight the icons of `nvim-web-devicons`
         styles = {
@@ -989,12 +989,16 @@ require("lazy").setup({
         { "<leader>b", group = "Buffer" },
         { "<leader>d", group = "Debug" },
         { "<leader>g", group = "Git" },
+        { "<leader>gh", group = "Git Hunks" },
+        { "<leader>gt", group = "Git Toggle" },
         { "<leader>h", group = "Harpoon" },
         { "<leader>l", group = "LSP" },
         { "<leader>n", group = "New/Create" },
         { "<leader>p", group = "Project" },
+        { "<leader>s", group = "Search/Flash" },
         { "<leader>t", group = "Terminal" },
         { "<leader>w", group = "Window" },
+        { "<leader>x", group = "Trouble" },
         { "<leader>c", group = "Colorscheme" },
       })
     end,
@@ -1052,22 +1056,47 @@ require("lazy").setup({
   {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
+    event = { "BufReadPost", "BufNewFile" },
+    cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
     config = function()
+      -- Windows-specific configuration
+      local is_windows = vim.loop.os_uname().sysname == "Windows_NT"
+      
       require("nvim-treesitter.configs").setup({
         ensure_installed = {
           "c", "lua", "vim", "vimdoc", "query",
           "javascript", "typescript", "python", "rust",
           "go", "html", "css", "json", "yaml",
-          "markdown", "markdown_inline", "bash"
+          "markdown", "markdown_inline", "bash",
+          "cpp", "cmake", "make", "dockerfile", "toml"
         },
+        auto_install = true,
         sync_install = false,
+        ignore_install = {},
+        
+        -- Windows-specific compiler configuration
+        compilers = is_windows and { "clang", "gcc", "zig" } or nil,
+        prefer_git = not is_windows,
+        
         highlight = {
           enable = true,
           additional_vim_regex_highlighting = false,
+          -- Disable for large files
+          disable = function(lang, buf)
+            local max_filesize = 100 * 1024 -- 100 KB
+            local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+            if ok and stats and stats.size > max_filesize then
+              return true
+            end
+          end,
         },
+        
         indent = {
-          enable = true
+          enable = true,
+          -- Disable for problematic languages
+          disable = { "python", "yaml" },
         },
+        
         incremental_selection = {
           enable = true,
           keymaps = {
@@ -1314,99 +1343,273 @@ require("lazy").setup({
     end,
   },
 
+  -- Mason - Package manager for LSP servers, DAP servers, linters, and formatters
+  {
+    "williamboman/mason.nvim",
+    cmd = "Mason",
+    keys = { { "<leader>cm", "<cmd>Mason<cr>", desc = "Mason" } },
+    build = ":MasonUpdate",
+    opts = {
+      ensure_installed = {
+        -- LSP servers
+        "lua-language-server",
+        "rust-analyzer", 
+        "pyright",
+        "typescript-language-server",
+        "html-lsp",
+        "css-lsp",
+        "json-lsp",
+        "bash-language-server",
+        "marksman",
+        "taplo",
+        "clangd",
+        -- Formatters
+        "stylua",
+        "prettier",
+        "black",
+        "isort",
+        "rustfmt",
+        "clang-format",
+        -- Linters
+        "eslint_d",
+        "flake8",
+        "shellcheck",
+      },
+    },
+    config = function(_, opts)
+      require("mason").setup(opts)
+      local mr = require("mason-registry")
+      mr:on("package:install:success", function()
+        vim.defer_fn(function()
+          -- trigger FileType event to possibly load this newly installed LSP server
+          require("lazy.core.handler.event").trigger({
+            event = "FileType",
+            buf = vim.api.nvim_get_current_buf(),
+          })
+        end, 100)
+      end)
+      local function ensure_installed()
+        for _, tool in ipairs(opts.ensure_installed) do
+          local p = mr.get_package(tool)
+          if not p:is_installed() then
+            p:install()
+          end
+        end
+      end
+      if mr.refresh then
+        mr.refresh(ensure_installed)
+      else
+        ensure_installed()
+      end
+    end,
+  },
+
+  -- Mason LSPConfig - Bridge between Mason and LSPConfig
+  {
+    "williamboman/mason-lspconfig.nvim",
+    dependencies = {
+      "williamboman/mason.nvim",
+    },
+    opts = {
+      ensure_installed = {
+        "lua_ls",
+        "rust_analyzer",
+        "pyright", 
+        "ts_ls",
+        "html",
+        "cssls",
+        "jsonls",
+        "bashls",
+        "marksman",
+        "taplo",
+        "clangd",
+      },
+      automatic_installation = true,
+    },
+  },
+
   -- LSP Configuration
   {
     "neovim/nvim-lspconfig",
+    event = { "BufReadPre", "BufNewFile" },
     dependencies = {
       "williamboman/mason.nvim",
       "williamboman/mason-lspconfig.nvim",
       "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
-      -- Mason setup
-      require("mason").setup()
-      require("mason-lspconfig").setup({
-        ensure_installed = {
-          "lua_ls",
-          "rust_analyzer",
-          "pyright",
-          "ts_ls",
-          "html",
-          "cssls",
-          "jsonls",
-        },
-      })
-
       local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-      -- LSP servers setup
-      local servers = {
-        "lua_ls",
-        "rust_analyzer",
-        "pyright",
-        "ts_ls",
-        "html",
-        "cssls",
-        "jsonls",
+      -- Enhanced capabilities for better LSP experience
+      capabilities.textDocument.completion.completionItem = {
+        documentationFormat = { "markdown", "plaintext" },
+        snippetSupport = true,
+        preselectSupport = true,
+        insertReplaceSupport = true,
+        labelDetailsSupport = true,
+        deprecatedSupport = true,
+        commitCharactersSupport = true,
+        tagSupport = { valueSet = { 1 } },
+        resolveSupport = {
+          properties = {
+            "documentation",
+            "detail",
+            "additionalTextEdits",
+          },
+        },
       }
 
-      for _, server in ipairs(servers) do
-        lspconfig[server].setup({
-          capabilities = capabilities,
-        })
-      end
-
-      -- Lua language server specific config
-      lspconfig.lua_ls.setup({
-        capabilities = capabilities,
-        settings = {
-          Lua = {
-            runtime = {
-              version = "LuaJIT",
-            },
-            diagnostics = {
-              globals = { "vim" },
-            },
-            workspace = {
-              library = vim.api.nvim_get_runtime_file("", true),
-            },
-            telemetry = {
-              enable = false,
+      -- LSP server configurations
+      local servers = {
+        lua_ls = {
+          settings = {
+            Lua = {
+              runtime = {
+                version = "LuaJIT",
+              },
+              diagnostics = {
+                globals = { "vim" },
+              },
+              workspace = {
+                library = vim.api.nvim_get_runtime_file("", true),
+                checkThirdParty = false,
+              },
+              telemetry = {
+                enable = false,
+              },
+              completion = {
+                callSnippet = "Replace",
+              },
             },
           },
         },
-      })
+        rust_analyzer = {
+          settings = {
+            ["rust-analyzer"] = {
+              cargo = {
+                allFeatures = true,
+                loadOutDirsFromCheck = true,
+                runBuildScripts = true,
+              },
+              checkOnSave = {
+                allFeatures = true,
+                command = "clippy",
+                extraArgs = { "--no-deps" },
+              },
+              procMacro = {
+                enable = true,
+                ignored = {
+                  ["async-trait"] = { "async_trait" },
+                  ["napi-derive"] = { "napi" },
+                  ["async-recursion"] = { "async_recursion" },
+                },
+              },
+            },
+          },
+        },
+        pyright = {
+          settings = {
+            python = {
+              analysis = {
+                autoSearchPaths = true,
+                diagnosticMode = "workspace",
+                useLibraryCodeForTypes = true,
+              },
+            },
+          },
+        },
+        clangd = {
+          cmd = {
+            "clangd",
+            "--background-index",
+            "--clang-tidy",
+            "--header-insertion=iwyu",
+            "--completion-style=detailed",
+            "--function-arg-placeholders",
+            "--fallback-style=llvm",
+          },
+          init_options = {
+            usePlaceholders = true,
+          },
+        },
+        ts_ls = {},
+        html = {},
+        cssls = {},
+        jsonls = {},
+        bashls = {},
+        marksman = {},
+        taplo = {},
+      }
+
+      -- Setup LSP servers
+      for server, config in pairs(servers) do
+        config.capabilities = capabilities
+        lspconfig[server].setup(config)
+      end
 
       -- Global mappings
-      vim.keymap.set('n', '<space>e', vim.diagnostic.open_float)
-      vim.keymap.set('n', '[d', vim.diagnostic.goto_prev)
-      vim.keymap.set('n', ']d', vim.diagnostic.goto_next)
-      vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist)
+      vim.keymap.set('n', '<space>e', vim.diagnostic.open_float, { desc = "Open diagnostic float" })
+      vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = "Go to previous diagnostic" })
+      vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = "Go to next diagnostic" })
+      vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist, { desc = "Set diagnostic loclist" })
 
       -- Use LspAttach autocommand to only map the following keys
       vim.api.nvim_create_autocmd('LspAttach', {
         group = vim.api.nvim_create_augroup('UserLspConfig', {}),
         callback = function(ev)
           local opts = { buffer = ev.buf }
-          vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
-          vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
-          vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
-          vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
-          vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
-          vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, opts)
-          vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, opts)
+          vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, vim.tbl_extend('force', opts, { desc = "Go to declaration" }))
+          vim.keymap.set('n', 'gd', vim.lsp.buf.definition, vim.tbl_extend('force', opts, { desc = "Go to definition" }))
+          vim.keymap.set('n', 'K', vim.lsp.buf.hover, vim.tbl_extend('force', opts, { desc = "Hover documentation" }))
+          vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, vim.tbl_extend('force', opts, { desc = "Go to implementation" }))
+          vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, vim.tbl_extend('force', opts, { desc = "Signature help" }))
+          vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, vim.tbl_extend('force', opts, { desc = "Add workspace folder" }))
+          vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, vim.tbl_extend('force', opts, { desc = "Remove workspace folder" }))
           vim.keymap.set('n', '<space>wl', function()
             print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-          end, opts)
-          vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, opts)
-          vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
-          vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, opts)
-          vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+          end, vim.tbl_extend('force', opts, { desc = "List workspace folders" }))
+          vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, vim.tbl_extend('force', opts, { desc = "Type definition" }))
+          vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, vim.tbl_extend('force', opts, { desc = "Rename symbol" }))
+          vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, vim.tbl_extend('force', opts, { desc = "Code action" }))
+          vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', opts, { desc = "Go to references" }))
           vim.keymap.set('n', '<space>f', function()
             vim.lsp.buf.format { async = true }
-          end, opts)
+          end, vim.tbl_extend('force', opts, { desc = "Format document" }))
         end,
+      })
+
+      -- Configure diagnostic signs
+      local signs = {
+        Error = " ",
+        Warn = " ",
+        Hint = " ",
+        Info = " "
+      }
+      for type, icon in pairs(signs) do
+        local hl = "DiagnosticSign" .. type
+        vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
+      end
+
+      -- Configure diagnostics
+      vim.diagnostic.config({
+        virtual_text = {
+          spacing = 4,
+          source = "if_many",
+          prefix = "●",
+        },
+        signs = true,
+        update_in_insert = false,
+        underline = true,
+        severity_sort = true,
+        float = {
+          focusable = false,
+          style = "minimal",
+          border = "rounded",
+          source = "always",
+          header = "",
+          prefix = "",
+        },
       })
     end,
   },
@@ -1570,6 +1773,148 @@ require("lazy").setup({
     config = function()
       -- Automatically creates missing directories when saving files
       -- No additional configuration needed
+    end,
+  },
+
+  -- Flash.nvim - Enhanced search/navigation
+  {
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    opts = {},
+    keys = {
+      { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+      { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+      { "r", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
+      { "R", mode = { "o", "x" }, function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
+      { "<c-s>", mode = { "c" }, function() require("flash").toggle() end, desc = "Toggle Flash Search" },
+    },
+  },
+
+  -- Trouble.nvim - Better diagnostics UI
+  {
+    "folke/trouble.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {},
+    cmd = "Trouble",
+    keys = {
+      {
+        "<leader>xx",
+        "<cmd>Trouble diagnostics toggle<cr>",
+        desc = "Diagnostics (Trouble)",
+      },
+      {
+        "<leader>xX",
+        "<cmd>Trouble diagnostics toggle filter.buf=0<cr>",
+        desc = "Buffer Diagnostics (Trouble)",
+      },
+      {
+        "<leader>cs",
+        "<cmd>Trouble symbols toggle focus=false<cr>",
+        desc = "Symbols (Trouble)",
+      },
+      {
+        "<leader>cl",
+        "<cmd>Trouble lsp toggle focus=false win.position=right<cr>",
+        desc = "LSP Definitions / references / ... (Trouble)",
+      },
+      {
+        "<leader>xL",
+        "<cmd>Trouble loclist toggle<cr>",
+        desc = "Location List (Trouble)",
+      },
+      {
+        "<leader>xQ",
+        "<cmd>Trouble qflist toggle<cr>",
+        desc = "Quickfix List (Trouble)",
+      },
+    },
+  },
+
+  -- nvim-surround - Text manipulation
+  {
+    "kylechui/nvim-surround",
+    version = "*",
+    event = "VeryLazy",
+    config = function()
+      require("nvim-surround").setup({})
+    end,
+  },
+
+  -- Comment.nvim - Smart commenting
+  {
+    "numToStr/Comment.nvim",
+    event = "VeryLazy",
+    config = function()
+      require("Comment").setup()
+    end,
+  },
+
+
+  -- Gitsigns - Git integration
+  {
+    "lewis6991/gitsigns.nvim",
+    event = { "BufReadPre", "BufNewFile" },
+    opts = {
+      signs = {
+        add = { text = "+" },
+        change = { text = "~" },
+        delete = { text = "_" },
+        topdelete = { text = "‾" },
+        changedelete = { text = "~" },
+      },
+      on_attach = function(bufnr)
+        local gs = package.loaded.gitsigns
+        
+        local function map(mode, l, r, opts)
+          opts = opts or {}
+          opts.buffer = bufnr
+          vim.keymap.set(mode, l, r, opts)
+        end
+        
+        -- Navigation
+        map('n', ']c', function()
+          if vim.wo.diff then return ']c' end
+          vim.schedule(function() gs.next_hunk() end)
+          return '<Ignore>'
+        end, {expr=true, desc = "Next git hunk"})
+        
+        map('n', '[c', function()
+          if vim.wo.diff then return '[c' end
+          vim.schedule(function() gs.prev_hunk() end)
+          return '<Ignore>'
+        end, {expr=true, desc = "Previous git hunk"})
+        
+        -- Actions
+        map('n', '<leader>ghs', gs.stage_hunk, { desc = "Stage hunk" })
+        map('n', '<leader>ghr', gs.reset_hunk, { desc = "Reset hunk" })
+        map('v', '<leader>ghs', function() gs.stage_hunk {vim.fn.line('.'), vim.fn.line('v')} end, { desc = "Stage hunk" })
+        map('v', '<leader>ghr', function() gs.reset_hunk {vim.fn.line('.'), vim.fn.line('v')} end, { desc = "Reset hunk" })
+        map('n', '<leader>ghS', gs.stage_buffer, { desc = "Stage buffer" })
+        map('n', '<leader>ghu', gs.undo_stage_hunk, { desc = "Undo stage hunk" })
+        map('n', '<leader>ghR', gs.reset_buffer, { desc = "Reset buffer" })
+        map('n', '<leader>ghp', gs.preview_hunk, { desc = "Preview hunk" })
+        map('n', '<leader>ghb', function() gs.blame_line{full=true} end, { desc = "Blame line" })
+        map('n', '<leader>gtb', gs.toggle_current_line_blame, { desc = "Toggle line blame" })
+        map('n', '<leader>ghd', gs.diffthis, { desc = "Diff this" })
+        map('n', '<leader>ghD', function() gs.diffthis('~') end, { desc = "Diff this ~" })
+        map('n', '<leader>gtd', gs.toggle_deleted, { desc = "Toggle deleted" })
+        
+        -- Text object
+        map({'o', 'x'}, 'ih', ':<C-U>Gitsigns select_hunk<CR>', { desc = "Select hunk" })
+      end
+    },
+  },
+
+  -- nvim-autopairs - Bracket completion
+  {
+    "windwp/nvim-autopairs",
+    event = "InsertEnter",
+    config = function()
+      require("nvim-autopairs").setup({})
+      -- Integration with nvim-cmp
+      local cmp_autopairs = require("nvim-autopairs.completion.cmp")
+      local cmp = require("cmp")
+      cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done())
     end,
   },
 
@@ -1771,6 +2116,109 @@ end, { desc = "Gruvbox Dark colorscheme" })
 vim.keymap.set("n", "<leader>cm", ":colorscheme monokai-pro<CR>", { desc = "Monokai Pro colorscheme" })
 vim.keymap.set("n", "<leader>cme", ":colorscheme melange<CR>", { desc = "Melange colorscheme" })
 vim.keymap.set("n", "<leader>ct", ":Telescope colorscheme<CR>", { desc = "Choose colorscheme" })
+
+-- Provider configurations for health checks
+-- Python provider
+if vim.fn.executable('python3') == 1 then
+  vim.g.python3_host_prog = vim.fn.exepath('python3')
+elseif vim.fn.executable('python') == 1 then
+  vim.g.python3_host_prog = vim.fn.exepath('python')
+else
+  vim.g.loaded_python3_provider = 0
+end
+
+-- Node.js provider
+if vim.fn.executable('node') == 1 then
+  vim.g.node_host_prog = vim.fn.exepath('node')
+else
+  vim.g.loaded_node_provider = 0
+end
+
+-- Disable unused providers to avoid warnings
+vim.g.loaded_ruby_provider = 0
+vim.g.loaded_perl_provider = 0
+
+-- Enhanced clipboard configuration for Windows/WSL
+if vim.fn.has('wsl') == 1 then
+  vim.g.clipboard = {
+    name = 'WslClipboard',
+    copy = {
+      ['+'] = 'clip.exe',
+      ['*'] = 'clip.exe',
+    },
+    paste = {
+      ['+'] = 'powershell.exe -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+      ['*'] = 'powershell.exe -c [Console]::Out.Write($(Get-Clipboard -Raw).tostring().replace("`r", ""))',
+    },
+    cache_enabled = 0,
+  }
+elseif vim.fn.has('win32') == 1 then
+  -- Windows clipboard should work by default with unnamedplus
+  vim.opt.clipboard = 'unnamedplus'
+end
+
+-- Transparent background configuration
+vim.api.nvim_create_autocmd("ColorScheme", {
+  pattern = "*",
+  callback = function()
+    -- Make background transparent
+    vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
+    vim.api.nvim_set_hl(0, "NormalFloat", { bg = "none" })
+    vim.api.nvim_set_hl(0, "NormalNC", { bg = "none" })
+    vim.api.nvim_set_hl(0, "LineNr", { bg = "none" })
+    vim.api.nvim_set_hl(0, "SignColumn", { bg = "none" })
+    vim.api.nvim_set_hl(0, "StatusLine", { bg = "none" })
+    vim.api.nvim_set_hl(0, "StatusLineNC", { bg = "none" })
+    vim.api.nvim_set_hl(0, "TabLine", { bg = "none" })
+    vim.api.nvim_set_hl(0, "TabLineFill", { bg = "none" })
+    vim.api.nvim_set_hl(0, "TabLineSel", { bg = "none" })
+    vim.api.nvim_set_hl(0, "VertSplit", { bg = "none" })
+    vim.api.nvim_set_hl(0, "WinSeparator", { bg = "none" })
+    vim.api.nvim_set_hl(0, "EndOfBuffer", { bg = "none" })
+    
+    -- Make Neo-tree transparent
+    vim.api.nvim_set_hl(0, "NeoTreeNormal", { bg = "none" })
+    vim.api.nvim_set_hl(0, "NeoTreeNormalNC", { bg = "none" })
+    vim.api.nvim_set_hl(0, "NeoTreeEndOfBuffer", { bg = "none" })
+    
+    -- Make Telescope transparent
+    vim.api.nvim_set_hl(0, "TelescopeNormal", { bg = "none" })
+    vim.api.nvim_set_hl(0, "TelescopeBorder", { bg = "none" })
+    vim.api.nvim_set_hl(0, "TelescopePromptNormal", { bg = "none" })
+    vim.api.nvim_set_hl(0, "TelescopeResultsNormal", { bg = "none" })
+    vim.api.nvim_set_hl(0, "TelescopePreviewNormal", { bg = "none" })
+    
+    -- Make popup menus transparent
+    vim.api.nvim_set_hl(0, "Pmenu", { bg = "none" })
+    vim.api.nvim_set_hl(0, "PmenuSbar", { bg = "none" })
+    
+    -- Make which-key transparent
+    vim.api.nvim_set_hl(0, "WhichKeyFloat", { bg = "none" })
+    
+    -- Make diagnostic floats transparent
+    vim.api.nvim_set_hl(0, "DiagnosticFloatingError", { bg = "none" })
+    vim.api.nvim_set_hl(0, "DiagnosticFloatingWarn", { bg = "none" })
+    vim.api.nvim_set_hl(0, "DiagnosticFloatingInfo", { bg = "none" })
+    vim.api.nvim_set_hl(0, "DiagnosticFloatingHint", { bg = "none" })
+  end,
+})
+
+-- Apply transparent background immediately
+vim.cmd([[
+  highlight Normal guibg=NONE ctermbg=NONE
+  highlight NormalFloat guibg=NONE ctermbg=NONE
+  highlight NormalNC guibg=NONE ctermbg=NONE
+  highlight LineNr guibg=NONE ctermbg=NONE
+  highlight SignColumn guibg=NONE ctermbg=NONE
+  highlight StatusLine guibg=NONE ctermbg=NONE
+  highlight StatusLineNC guibg=NONE ctermbg=NONE
+  highlight TabLine guibg=NONE ctermbg=NONE
+  highlight TabLineFill guibg=NONE ctermbg=NONE
+  highlight TabLineSel guibg=NONE ctermbg=NONE
+  highlight VertSplit guibg=NONE ctermbg=NONE
+  highlight WinSeparator guibg=NONE ctermbg=NONE
+  highlight EndOfBuffer guibg=NONE ctermbg=NONE
+]])
 
 -- Set default colorscheme to Melange dark (already set in plugin config above)
 -- vim.o.background = "dark"
