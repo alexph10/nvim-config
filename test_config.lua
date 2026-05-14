@@ -3,7 +3,7 @@ print("Testing Neovim configuration...")
 
 -- Test if lazy.nvim is properly set up
 local lazy_path = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if vim.loop.fs_stat(lazy_path) then
+if (vim.uv or vim.loop).fs_stat(lazy_path) then
   print("✓ Lazy.nvim is installed")
 else
   print("✗ Lazy.nvim is missing")
