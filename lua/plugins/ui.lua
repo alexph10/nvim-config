@@ -1,6 +1,5 @@
--- UI plugins: dashboard, statusline, indent guides, which-key
 return {
-  -- Alpha dashboard for home page
+  -- alpha dashboard
   {
     "goolord/alpha-nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -8,7 +7,6 @@ return {
       local alpha = require("alpha")
       local dashboard = require("alpha.themes.dashboard")
 
-      -- ASCII art from actual hill1.jpg image
       dashboard.section.header.val = {
         "%%%#+*+*******************=+**%##***#########*#####**#+*###*#############%%##%%%",
         "%%%#*+********************++**###**#################*####################%%##%%%",
@@ -62,7 +60,6 @@ return {
         "#%%%########*=+******#%%%#%%+#%%%%%%%%%%%#%%%%%%%%%**%%%%%%%%##%%%#%#%%##*%@%%%%",
       }
 
-      -- Menu buttons
       dashboard.section.buttons.val = {
         dashboard.button("f", "[F] Find file", ":Telescope find_files <CR>"),
         dashboard.button("e", "[E] New file", ":ene <BAR> startinsert <CR>"),
@@ -72,7 +69,6 @@ return {
         dashboard.button("q", "[Q] Quit Neovim", ":qa<CR>"),
       }
 
-      -- Footer
       local function footer()
         local datetime = os.date("%d-%m-%Y  %H:%M:%S")
         local version = vim.version()
@@ -82,7 +78,6 @@ return {
 
       dashboard.section.footer.val = footer()
 
-      -- Custom highlight groups for REALLY RED ASCII art
       vim.api.nvim_set_hl(0, "AsciiRed", { fg = "#FF0000" })
       vim.api.nvim_set_hl(0, "AsciiOrange", { fg = "#FF2200" })
       vim.api.nvim_set_hl(0, "AsciiYellow", { fg = "#FF4400" })
@@ -90,13 +85,11 @@ return {
       vim.api.nvim_set_hl(0, "AsciiDark", { fg = "#880000" })
       vim.api.nvim_set_hl(0, "DashboardButtons", { fg = "#FF3333" })
       vim.api.nvim_set_hl(0, "DashboardFooter", { fg = "#FF1111" })
-      
-      -- Apply color highlighting based on image analysis
+
       dashboard.section.header.opts.hl = "AsciiRed"
       dashboard.section.buttons.opts.hl = "DashboardButtons"
       dashboard.section.footer.opts.hl = "DashboardFooter"
 
-      -- Layout
       dashboard.config.layout = {
         { type = "padding", val = 2 },
         dashboard.section.header,
@@ -106,16 +99,13 @@ return {
         dashboard.section.footer,
       }
 
-      -- Disable folding on alpha buffer
-      vim.cmd([[
-        autocmd FileType alpha setlocal nofoldenable
-      ]])
+      vim.cmd([[autocmd FileType alpha setlocal nofoldenable]])
 
       alpha.setup(dashboard.config)
     end,
   },
 
-  -- Which-key for keybinding help
+  -- which-key
   {
     "folke/which-key.nvim",
     event = "VeryLazy",
@@ -125,8 +115,7 @@ return {
     end,
     config = function()
       local wk = require("which-key")
-      
-      -- Modern which-key v3 setup
+
       wk.setup({
         preset = "modern",
         delay = 300,
@@ -211,8 +200,7 @@ return {
           },
         },
       })
-      
-      -- Register key groups
+
       wk.add({
         { "<leader>f", group = "Find" },
         { "<leader>b", group = "Buffer" },
@@ -233,7 +221,7 @@ return {
     end,
   },
 
-  -- Lualine statusline
+  -- lualine
   {
     "nvim-lualine/lualine.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -281,7 +269,7 @@ return {
     end,
   },
 
-  -- Indent blankline
+  -- indent-blankline
   {
     "lukas-reineke/indent-blankline.nvim",
     main = "ibl",

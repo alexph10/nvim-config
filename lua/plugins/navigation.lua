@@ -1,6 +1,5 @@
--- File navigation and explorer plugins
 return {
-  -- Window picker for better window management
+  -- window-picker
   {
     "s1n7ax/nvim-window-picker",
     name = "window-picker",
@@ -20,7 +19,7 @@ return {
     end,
   },
 
-  -- Neo-tree file explorer
+  -- neo-tree
   {
     "nvim-neo-tree/neo-tree.nvim",
     branch = "v3.x",
@@ -210,7 +209,7 @@ return {
     end,
   },
 
-  -- Oil.nvim - File manager as a buffer
+  -- oil
   {
     "stevearc/oil.nvim",
     dependencies = { "nvim-tree/nvim-web-devicons" },
@@ -263,31 +262,7 @@ return {
     end,
   },
 
-  -- Project.nvim - Automatic project detection
-  {
-    "ahmedkhalf/project.nvim",
-    config = function()
-      require("project_nvim").setup({
-        detection_methods = { "lsp", "pattern" },
-        patterns = { ".git", "_darcs", ".hg", ".bzr", ".svn", "Makefile", "package.json", "Cargo.toml", "go.mod", "requirements.txt", "pyproject.toml" },
-        ignore_lsp = {},
-        exclude_dirs = {},
-        show_hidden = false,
-        silent_chdir = true,
-        scope_chdir = 'global',
-        datapath = vim.fn.stdpath("data"),
-        -- Enable automatic project root detection on file changes
-        manual_mode = false,
-        -- Update project root when new files are created
-        update_focused_file = {
-          enable = true,
-          update_cwd = true,
-        },
-      })
-    end,
-  },
-
-  -- Harpoon - Quick file navigation
+  -- harpoon
   {
     "ThePrimeagen/harpoon",
     branch = "harpoon2",
@@ -306,12 +281,12 @@ return {
     end,
   },
 
-  -- Templates.nvim - File templates
+  -- file templates
   {
     "glepnir/template.nvim",
-    cmd = {'Template','TemProject'},
+    cmd = { "Template", "TemProject" },
     config = function()
-      require('template').setup({
+      require("template").setup({
         temp_dir = vim.fn.stdpath("config") .. "/templates",
         author = "Your Name",
         email = "your.email@example.com",

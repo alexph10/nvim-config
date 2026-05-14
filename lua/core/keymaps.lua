@@ -1,5 +1,3 @@
--- Key mappings
-
 -- File Explorer
 vim.keymap.set("n", "<leader>e", ":Neotree toggle<CR>", { desc = "Toggle Neo-tree" })
 vim.keymap.set("n", "<leader>o", ":Neotree focus<CR>", { desc = "Focus Neo-tree" })
@@ -74,11 +72,9 @@ vim.keymap.set("n", "<leader>nf", ":AdvancedNewFile<CR>", { desc = "Create new f
 vim.keymap.set("n", "-", ":Oil<CR>", { desc = "Open parent directory in Oil" })
 vim.keymap.set("n", "<leader>-", ":Oil .<CR>", { desc = "Open current directory in Oil" })
 
--- Telescope File Browser and Projects
+-- Telescope File Browser
 vim.keymap.set("n", "<leader>fb", ":Telescope file_browser<CR>", { desc = "File browser" })
 vim.keymap.set("n", "<leader>fB", ":Telescope file_browser path=%:p:h select_buffer=true<CR>", { desc = "File browser (current file)" })
-vim.keymap.set("n", "<leader>pp", ":Telescope projects<CR>", { desc = "Switch projects" })
-vim.keymap.set("n", "<leader>pf", ":Telescope find_files<CR>", { desc = "Find project files" })
 
 -- Harpoon - Quick file navigation
 vim.keymap.set("n", "<leader>ha", function() require("harpoon"):list():append() end, { desc = "Harpoon add file" })

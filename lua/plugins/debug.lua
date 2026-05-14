@@ -1,6 +1,5 @@
--- Debug adapter plugins
 return {
-  -- DAP UI for debugging
+  -- dap-ui
   {
     "rcarriga/nvim-dap-ui",
     dependencies = {
@@ -83,7 +82,7 @@ return {
     end,
   },
 
-  -- nvim-dap-virtual-text - Show variable values inline during debugging
+  -- inline variable values during debugging
   {
     "theHamsta/nvim-dap-virtual-text",
     dependencies = {

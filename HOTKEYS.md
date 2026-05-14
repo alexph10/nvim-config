@@ -143,8 +143,6 @@
 | `<Space>fc` | Normal | Commands |
 | `<Space>fk` | Normal | Keymaps |
 | `<Space>fs` | Normal | Search in current buffer |
-| `<Space>pp` | Normal | Switch projects |
-| `<Space>pf` | Normal | Find project files |
 | `<Space>ct` | Normal | Choose colorscheme |
 
 ### Inside Telescope:

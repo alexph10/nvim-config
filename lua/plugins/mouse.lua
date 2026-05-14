@@ -1,6 +1,5 @@
--- Mouse-friendly and clickable UI plugins
 return {
-  -- bufferline.nvim - Clickable buffer/tab bar
+  -- bufferline
   {
     "akinsho/bufferline.nvim",
     version = "*",
@@ -60,7 +59,7 @@ return {
     end,
   },
 
-  -- dropbar.nvim - Clickable breadcrumb navigation bar
+  -- dropbar
   {
     "Bekaboo/dropbar.nvim",
     event = { "BufReadPost", "BufNewFile" },
@@ -71,8 +70,8 @@ return {
     config = function()
       require("dropbar").setup({
         bar = {
+          -- skip winbar in tiny windows to avoid E36
           enable = function(buf, win, _)
-            -- Prevent E36 "Not enough room" by skipping winbar in small windows
             if not vim.api.nvim_win_is_valid(win)
               or vim.api.nvim_win_get_height(win) <= 3
               or vim.fn.win_gettype(win) ~= ""
@@ -92,7 +91,7 @@ return {
     end,
   },
 
-  -- dressing.nvim - Better vim.ui.select and vim.ui.input
+  -- dressing (vim.ui.select / input)
   {
     "stevearc/dressing.nvim",
     event = "VeryLazy",
@@ -159,7 +158,7 @@ return {
     end,
   },
 
-  -- nvim-scrollbar - Clickable scrollbar with diagnostics
+  -- scrollbar with diagnostics
   {
     "petertriho/nvim-scrollbar",
     event = { "BufReadPost", "BufNewFile" },

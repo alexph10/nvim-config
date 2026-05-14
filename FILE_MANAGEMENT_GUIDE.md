@@ -1,8 +1,8 @@
-# 🚀 File & Project Management Guide
+# File & Project Management Guide
 
 Your Neovim configuration now includes powerful file and project management plugins! Here's everything you need to know:
 
-## 📦 Installed Plugins
+## Installed Plugins
 
 ### 1. **AdvancedNewFile.nvim** - Quick File Creation
 - **Purpose**: Create files and folders quickly with automatic directory creation
@@ -66,7 +66,7 @@ Your Neovim configuration now includes powerful file and project management plug
 - **Purpose**: Automatically creates missing directories when saving files
 - **Usage**: Automatic - no keymaps needed
 
-## 🎯 Quick Reference - Key Combinations
+## Quick Reference - Key Combinations
 
 ### File Creation & Management
 | Keymap | Action | Plugin |
@@ -98,7 +98,7 @@ Your Neovim configuration now includes powerful file and project management plug
 | `d` | Delete |
 | `r` | Rename |
 
-## 🔧 Workflow Examples
+## Workflow Examples
 
 ### Creating a New Project Structure
 1. `<leader>nf` → `my-project/`
@@ -121,7 +121,7 @@ Your Neovim configuration now includes powerful file and project management plug
 2. Select project → Auto-change directory
 3. `<leader>pf` → Find files in new project
 
-## 🎨 Template Variables
+## Template Variables
 
 When using templates, these variables are automatically replaced:
 - `{{_file_name_}}` - Full filename
@@ -130,14 +130,14 @@ When using templates, these variables are automatically replaced:
 - `{{_author_}}` - Your name (configure in init.lua)
 - `{{_email_}}` - Your email (configure in init.lua)
 
-## 🚀 Next Steps
+## Next Steps
 
 1. **Restart Neovim** or run `:Lazy sync` to install all plugins
 2. **Try the keymaps** - Start with `<leader>nf` and `-`
 3. **Customize templates** - Edit files in `~/.config/nvim/templates/`
 4. **Update author info** - Edit the Templates.nvim config in init.lua
 
-## 💡 Pro Tips
+## Pro Tips
 
 - Use Oil (`-`) for bulk file operations
 - Harpoon is perfect for switching between 2-4 main files
@@ -145,4 +145,4 @@ When using templates, these variables are automatically replaced:
 - Telescope File Browser (`<leader>fb`) is great for exploring new codebases
 - Templates save time - create your own for common file types
 
-Happy coding! 🎉
+Happy coding!

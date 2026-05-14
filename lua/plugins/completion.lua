@@ -1,6 +1,5 @@
--- Completion and snippet plugins
 return {
-  -- LuaSnip snippet engine
+  -- luasnip
   {
     "L3MON4D3/LuaSnip",
     version = "v2.*",
@@ -15,7 +14,7 @@ return {
     end,
   },
 
-  -- nvim-cmp completion engine
+  -- nvim-cmp
   {
     "hrsh7th/nvim-cmp",
     dependencies = {
@@ -74,30 +73,27 @@ return {
         })
       })
 
-      -- Set configuration for specific filetype.
-      cmp.setup.filetype('gitcommit', {
+      cmp.setup.filetype("gitcommit", {
         sources = cmp.config.sources({
-          { name = 'git' },
+          { name = "git" },
         }, {
-          { name = 'buffer' },
+          { name = "buffer" },
         })
       })
 
-      -- Use buffer source for `/` and `?`.
-      cmp.setup.cmdline({ '/', '?' }, {
+      cmp.setup.cmdline({ "/", "?" }, {
         mapping = cmp.mapping.preset.cmdline(),
         sources = {
-          { name = 'buffer' }
+          { name = "buffer" },
         }
       })
 
-      -- Use cmdline & path source for ':'.
-      cmp.setup.cmdline(':', {
+      cmp.setup.cmdline(":", {
         mapping = cmp.mapping.preset.cmdline(),
         sources = cmp.config.sources({
-          { name = 'path' }
+          { name = "path" },
         }, {
-          { name = 'cmdline' }
+          { name = "cmdline" },
         })
       })
     end,

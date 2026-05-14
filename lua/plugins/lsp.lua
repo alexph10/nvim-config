@@ -1,6 +1,5 @@
--- LSP, Mason, and related plugins
 return {
-  -- Mason - Package manager for LSP servers, DAP servers, linters, and formatters
+  -- mason
   {
     "williamboman/mason.nvim",
     cmd = "Mason",
@@ -8,9 +7,8 @@ return {
     build = ":MasonUpdate",
     opts = {
       ensure_installed = {
-        -- LSP servers
         "lua-language-server",
-        "rust-analyzer", 
+        "rust-analyzer",
         "pyright",
         "codelldb",
         "typescript-language-server",
@@ -21,14 +19,12 @@ return {
         "marksman",
         "taplo",
         "clangd",
-        -- Formatters
         "stylua",
         "prettier",
         "black",
         "isort",
         "rustfmt",
         "clang-format",
-        -- Linters
         "eslint_d",
         "flake8",
         "shellcheck",
@@ -39,7 +35,6 @@ return {
       local mr = require("mason-registry")
       mr:on("package:install:success", function()
         vim.defer_fn(function()
-          -- trigger FileType event to possibly load this newly installed LSP server
           require("lazy.core.handler.event").trigger({
             event = "FileType",
             buf = vim.api.nvim_get_current_buf(),
@@ -62,7 +57,7 @@ return {
     end,
   },
 
-  -- Mason LSPConfig - Bridge between Mason and LSPConfig
+  -- mason-lspconfig (servers set up manually below)
   {
     "williamboman/mason-lspconfig.nvim",
     dependencies = {
@@ -81,12 +76,11 @@ return {
         "taplo",
         "clangd",
       },
-      -- servers are set up manually below
       automatic_enable = false,
     },
   },
 
-  -- LSP Configuration
+  -- lspconfig
   {
     "neovim/nvim-lspconfig",
     event = { "BufReadPre", "BufNewFile" },
@@ -99,7 +93,6 @@ return {
       local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-      -- Enhanced capabilities for better LSP experience
       capabilities.textDocument.completion.completionItem = {
         documentationFormat = { "markdown", "plaintext" },
         snippetSupport = true,
@@ -118,31 +111,22 @@ return {
         },
       }
 
-      -- LSP server configurations
+      -- rust_analyzer is owned by rustaceanvim; do not set it up here
       local servers = {
         lua_ls = {
           settings = {
             Lua = {
-              runtime = {
-                version = "LuaJIT",
-              },
-              diagnostics = {
-                globals = { "vim" },
-              },
+              runtime = { version = "LuaJIT" },
+              diagnostics = { globals = { "vim" } },
               workspace = {
                 library = vim.api.nvim_get_runtime_file("", true),
                 checkThirdParty = false,
               },
-              telemetry = {
-                enable = false,
-              },
-              completion = {
-                callSnippet = "Replace",
-              },
+              telemetry = { enable = false },
+              completion = { callSnippet = "Replace" },
             },
           },
         },
-        -- rust_analyzer is managed by rustaceanvim (see plugins/rust.lua)
         pyright = {
           settings = {
             python = {
@@ -177,48 +161,45 @@ return {
         taplo = {},
       }
 
-      -- Setup LSP servers
       for server, config in pairs(servers) do
         config.capabilities = capabilities
         lspconfig[server].setup(config)
       end
 
-      -- Global mappings
-      vim.keymap.set('n', '<space>e', vim.diagnostic.open_float, { desc = "Open diagnostic float" })
-      vim.keymap.set('n', '[d', function() vim.diagnostic.jump({ count = -1, float = true }) end, { desc = "Go to previous diagnostic" })
-      vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, { desc = "Go to next diagnostic" })
-      vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist, { desc = "Set diagnostic loclist" })
+      vim.keymap.set("n", "<space>e", vim.diagnostic.open_float, { desc = "Open diagnostic float" })
+      vim.keymap.set("n", "[d", function() vim.diagnostic.jump({ count = -1, float = true }) end, { desc = "Go to previous diagnostic" })
+      vim.keymap.set("n", "]d", function() vim.diagnostic.jump({ count = 1, float = true }) end, { desc = "Go to next diagnostic" })
+      vim.keymap.set("n", "<space>q", vim.diagnostic.setloclist, { desc = "Set diagnostic loclist" })
 
-      -- Use LspAttach autocommand to only map the following keys
-      vim.api.nvim_create_autocmd('LspAttach', {
-        group = vim.api.nvim_create_augroup('UserLspConfig', {}),
+      vim.api.nvim_create_autocmd("LspAttach", {
+        group = vim.api.nvim_create_augroup("UserLspConfig", {}),
         callback = function(ev)
-          -- Defer keymap setup to avoid E36 "Not enough room" during LspRestart
+          -- defer keymap setup to avoid E36 "Not enough room" on LspRestart
           vim.schedule(function()
             if not vim.api.nvim_buf_is_valid(ev.buf) then return end
             local opts = { buffer = ev.buf }
-            vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, vim.tbl_extend('force', opts, { desc = "Go to declaration" }))
-            vim.keymap.set('n', 'gd', vim.lsp.buf.definition, vim.tbl_extend('force', opts, { desc = "Go to definition" }))
-            vim.keymap.set('n', 'K', vim.lsp.buf.hover, vim.tbl_extend('force', opts, { desc = "Hover documentation" }))
-            vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, vim.tbl_extend('force', opts, { desc = "Go to implementation" }))
-            vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, vim.tbl_extend('force', opts, { desc = "Signature help" }))
-            vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, vim.tbl_extend('force', opts, { desc = "Add workspace folder" }))
-            vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, vim.tbl_extend('force', opts, { desc = "Remove workspace folder" }))
-            vim.keymap.set('n', '<space>wl', function()
+            local function map(lhs, rhs, desc, mode)
+              vim.keymap.set(mode or "n", lhs, rhs, vim.tbl_extend("force", opts, { desc = desc }))
+            end
+            map("gD", vim.lsp.buf.declaration, "Go to declaration")
+            map("gd", vim.lsp.buf.definition, "Go to definition")
+            map("K", vim.lsp.buf.hover, "Hover documentation")
+            map("gi", vim.lsp.buf.implementation, "Go to implementation")
+            map("<C-k>", vim.lsp.buf.signature_help, "Signature help")
+            map("<space>wa", vim.lsp.buf.add_workspace_folder, "Add workspace folder")
+            map("<space>wr", vim.lsp.buf.remove_workspace_folder, "Remove workspace folder")
+            map("<space>wl", function()
               print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
-            end, vim.tbl_extend('force', opts, { desc = "List workspace folders" }))
-            vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, vim.tbl_extend('force', opts, { desc = "Type definition" }))
-            vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, vim.tbl_extend('force', opts, { desc = "Rename symbol" }))
-            vim.keymap.set({ 'n', 'v' }, '<space>ca', vim.lsp.buf.code_action, vim.tbl_extend('force', opts, { desc = "Code action" }))
-            vim.keymap.set('n', 'gr', vim.lsp.buf.references, vim.tbl_extend('force', opts, { desc = "Go to references" }))
-            vim.keymap.set('n', '<space>f', function()
-              vim.lsp.buf.format { async = true }
-            end, vim.tbl_extend('force', opts, { desc = "Format document" }))
+            end, "List workspace folders")
+            map("<space>D", vim.lsp.buf.type_definition, "Type definition")
+            map("<space>rn", vim.lsp.buf.rename, "Rename symbol")
+            map("<space>ca", vim.lsp.buf.code_action, "Code action", { "n", "v" })
+            map("gr", vim.lsp.buf.references, "Go to references")
+            map("<space>f", function() vim.lsp.buf.format({ async = true }) end, "Format document")
           end)
         end,
       })
 
-      -- Configure diagnostics
       vim.diagnostic.config({
         virtual_text = {
           spacing = 4,

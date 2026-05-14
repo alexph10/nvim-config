@@ -1,4 +1,3 @@
--- Treesitter for syntax highlighting
 return {
   {
     "nvim-treesitter/nvim-treesitter",
@@ -6,9 +5,8 @@ return {
     event = { "BufReadPost", "BufNewFile" },
     cmd = { "TSUpdateSync", "TSUpdate", "TSInstall" },
     config = function()
-      -- Windows-specific configuration
       local is_windows = (vim.uv or vim.loop).os_uname().sysname == "Windows_NT"
-      
+
       require("nvim-treesitter.configs").setup({
         ensure_installed = {
           "c", "lua", "vim", "vimdoc", "query",
@@ -20,30 +18,27 @@ return {
         auto_install = true,
         sync_install = false,
         ignore_install = {},
-        
-        -- Windows-specific compiler configuration
+
         compilers = is_windows and { "clang", "gcc", "zig" } or nil,
         prefer_git = not is_windows,
-        
+
         highlight = {
           enable = true,
           additional_vim_regex_highlighting = false,
-          -- Disable for large files
           disable = function(lang, buf)
-            local max_filesize = 100 * 1024 -- 100 KB
+            local max_filesize = 100 * 1024
             local ok, stats = pcall((vim.uv or vim.loop).fs_stat, vim.api.nvim_buf_get_name(buf))
             if ok and stats and stats.size > max_filesize then
               return true
             end
           end,
         },
-        
+
         indent = {
           enable = true,
-          -- Disable for problematic languages
           disable = { "python", "yaml" },
         },
-        
+
         incremental_selection = {
           enable = true,
           keymaps = {
@@ -57,7 +52,6 @@ return {
     end,
   },
 
-  -- nvim-treesitter-textobjects - Treesitter-based text objects
   {
     "nvim-treesitter/nvim-treesitter-textobjects",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
