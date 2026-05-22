@@ -17,6 +17,16 @@ require("core.gui")
 
 require("lazy").setup({
   { import = "plugins" },
+}, {
+  ui = {
+    icons = {
+      cmd = "[cmd]", config = "[cfg]", event = "[evt]", ft = "[ft]",
+      init = "[init]", import = "[imp]", keys = "[keys]", lazy = "[lazy] ",
+      loaded = "*", not_loaded = "o", plugin = "[p]", runtime = "[rt]",
+      require = "[req]", source = "[src]", start = "[start]", task = "[t]",
+      list = { "-", "*", "x", "!" },
+    },
+  },
 })
 
 require("core.keymaps")

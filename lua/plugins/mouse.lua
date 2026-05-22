@@ -40,13 +40,13 @@ return {
               separator = true,
             },
           },
-          color_icons = true,
-          show_buffer_icons = true,
+          color_icons = false,
+          show_buffer_icons = false,
           show_buffer_close_icons = true,
           show_close_icon = true,
           show_tab_indicators = true,
           persist_buffer_sort = true,
-          separator_style = "slant",
+          separator_style = { "|", "|" },
           enforce_regular_tabs = false,
           always_show_bufferline = true,
           hover = {
@@ -82,7 +82,7 @@ return {
           end,
         },
         icons = {
-          enable = true,
+          enable = false,
         },
         menu = {
           quick_navigation = true,

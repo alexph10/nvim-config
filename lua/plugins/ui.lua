@@ -126,10 +126,10 @@ return {
         },
         spec = {},
         icons = {
-          breadcrumb = "»",
+          breadcrumb = ">>",
           separator = "->",
           group = "+",
-          ellipsis = "…",
+          ellipsis = "...",
           mappings = false,
           rules = {},
           colors = true,
@@ -276,8 +276,8 @@ return {
     config = function()
       require("ibl").setup({
         indent = {
-          char = "│",
-          tab_char = "│",
+          char = "|",
+          tab_char = "|",
         },
         scope = { enabled = false },
         exclude = {

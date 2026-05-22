@@ -29,6 +29,13 @@ return {
         "flake8",
         "shellcheck",
       },
+      ui = {
+        icons = {
+          package_installed = "[x]",
+          package_pending = "[~]",
+          package_uninstalled = "[ ]",
+        },
+      },
     },
     config = function(_, opts)
       require("mason").setup(opts)

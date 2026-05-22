@@ -11,7 +11,7 @@ return {
       local dapui = require("dapui")
 
       dapui.setup({
-        icons = { expanded = "▾", collapsed = "▸", current_frame = "▸" },
+        icons = { expanded = "v", collapsed = ">", current_frame = ">" },
         mappings = {
           expand = { "<CR>", "<2-LeftMouse>" },
           open = "o",
@@ -98,6 +98,8 @@ return {
         show_stop_reason = true,
         commented = false,
         virt_text_pos = "eol",
+        virt_text_win_col = nil,
+        virt_text_prefix = ":= ",
       })
     end,
   },
